@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import vRemixicon from 'v-remixicon';
+import Browser from 'webextension-polyfill';
 import App from './App.vue';
 import compsUi from './compsUi';
 import icons from './icons';
@@ -12,10 +13,19 @@ export default function (rootElement) {
 
   rootElement.shadowRoot.appendChild(appRoot);
 
-  createApp(App)
+  const app = createApp(App)
     .provide('rootElement', rootElement)
     .use(vueI18n)
     .use(vRemixicon, icons)
-    .use(compsUi)
-    .mount(appRoot);
+    .use(compsUi);
+
+  // Mount first to render quickly, then adopt stored locale
+  app.mount(appRoot);
+
+  // Apply user-configured locale if available
+  Browser.storage.local.get('settings').then(({ settings }) => {
+    if (settings?.locale) {
+      vueI18n.global.locale.value = settings.locale;
+    }
+  });
 }

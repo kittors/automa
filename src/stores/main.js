@@ -16,7 +16,7 @@ export const useStore = defineStore('main', {
       nodes: [],
     },
     settings: {
-      locale: 'en',
+      locale: 'zh',
       deleteLogAfter: 30,
       logsLimit: 1000,
       editor: {

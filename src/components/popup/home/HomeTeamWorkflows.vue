@@ -22,8 +22,14 @@
           </span>
         </div>
       </div>
-      <p v-if="workflow.isDisabled" class="text-sm text-gray-600">Disabled</p>
-      <button v-else title="Execute" @click="executeWorkflow(workflow)">
+      <p v-if="workflow.isDisabled" class="text-sm text-gray-600">
+        {{ $t('common.disabled') }}
+      </p>
+      <button
+        v-else
+        :title="$t('common.execute')"
+        @click="executeWorkflow(workflow)"
+      >
         <v-remixicon name="riPlayLine" />
       </button>
     </ui-card>

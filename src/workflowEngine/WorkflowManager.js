@@ -3,6 +3,7 @@ import BrowserAPIService from '@/service/browser-api/BrowserAPIService';
 import { fetchApi } from '@/utils/api';
 import convertWorkflowData from '@/utils/convertWorkflowData';
 import getBlockMessage from '@/utils/getBlockMessage';
+import i18n, { loadLocaleMessages } from '@/lib/vueI18n';
 import blocksHandler from './blocksHandler';
 import WorkflowEngine from './WorkflowEngine';
 import WorkflowEvent from './workflowEvent';
@@ -72,14 +73,33 @@ class WorkflowManager {
 
             const name = workflowData.name.slice(0, 32);
 
-            BrowserAPIService.notifications.create(`logs:${id}`, {
-              type: 'basic',
-              iconUrl: BrowserAPIService.runtime.getURL('icon-128.png'),
-              title: status === 'success' ? 'Success' : 'Error',
-              message: `${
-                status === 'success' ? 'Successfully' : 'Failed'
-              } ran the "${name}" workflow`,
-            });
+            BrowserAPIService.storage.local
+              .get('settings')
+              .then(async ({ settings }) => {
+                const locale = settings?.locale || 'zh';
+                try {
+                  await loadLocaleMessages(locale, 'newtab');
+                } catch (e) {
+                  // ignore load error
+                }
+                i18n.global.locale.value = locale;
+
+                const titleKey =
+                  status === 'success'
+                    ? 'common.logStatus.success'
+                    : 'common.logStatus.error';
+                const msgKey =
+                  status === 'success'
+                    ? 'workflowRun.success'
+                    : 'workflowRun.failed';
+
+                BrowserAPIService.notifications.create(`logs:${id}`, {
+                  type: 'basic',
+                  iconUrl: BrowserAPIService.runtime.getURL('icon-128.png'),
+                  title: i18n.global.t(titleKey),
+                  message: i18n.global.t(msgKey, { name }),
+                });
+              });
           });
       }
 

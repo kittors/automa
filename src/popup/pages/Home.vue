@@ -11,9 +11,7 @@
       <h1 class="text-xl font-semibold text-white">Automa</h1>
       <div class="grow"></div>
       <ui-button
-        v-tooltip.group="
-          'Start recording by opening the dashboard. Click to learn more'
-        "
+        v-tooltip.group="t('home.record.tooltip')"
         icon
         class="mr-2"
         @click="openDocs"
@@ -61,7 +59,9 @@
       <ui-tab v-if="hostedWorkflowStore.toArray.length > 0" value="host">
         {{ t(`home.workflow.type.host`) }}
       </ui-tab>
-      <ui-tab v-if="userStore.user?.teams?.length" value="team"> Teams </ui-tab>
+      <ui-tab v-if="userStore.user?.teams?.length" value="team">
+        {{ t('home.workflow.type.team') }}
+      </ui-tab>
     </ui-tabs>
   </div>
   <home-team-workflows
@@ -87,7 +87,7 @@
     <div v-if="pinnedWorkflows.length > 0" class="mt-1 mb-4 border-b pb-4">
       <div class="mb-1 flex items-center text-gray-300">
         <v-remixicon name="riPushpin2Line" size="20" class="mr-2" />
-        <span>Pinned workflows</span>
+        <span>{{ t('home.workflow.pinned') }}</span>
       </div>
       <home-workflow-card
         v-for="workflow in pinnedWorkflows"
@@ -109,7 +109,7 @@
       class="flex items-center"
     >
       <ui-select v-model="state.activeFolder" class="flex-1">
-        <option value="">Folder (all)</option>
+        <option value="">{{ t('home.folderAll') }}</option>
         <option
           v-for="folder in folderStore.items"
           :key="folder.id"
@@ -122,13 +122,17 @@
         <template #trigger>
           <ui-button>
             <v-remixicon name="riSortDesc" class="mr-2 -ml-1" />
-            <span>Sort</span>
+            <span>{{ t('sort.sortBy') }}</span>
           </ui-button>
         </template>
         <div class="w-48">
-          <ui-select v-model="sortState.order" block placeholder="Sort order">
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
+          <ui-select
+            v-model="sortState.order"
+            block
+            :placeholder="t('sort.order')"
+          >
+            <option value="asc">{{ t('sort.ascending') }}</option>
+            <option value="desc">{{ t('sort.descending') }}</option>
           </ui-select>
           <ui-select
             v-model="sortState.by"

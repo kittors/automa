@@ -48,7 +48,8 @@
     "category": "Category",
     "optional": "Optional",
     "0disable": "0 to disable",
-    "millisecond": "millisecond | milliseconds"
+    "millisecond": "millisecond | milliseconds",
+    "selectBlock": "Select block"
   },
   "message": {
     "noBlock": "No block",
@@ -67,11 +68,18 @@
     "name": "Name",
     "createdAt": "Created date",
     "updatedAt": "Last update",
-    "mostUsed": "Most used"
+    "mostUsed": "Most used",
+    "order": "Sort order",
+    "ascending": "Ascending",
+    "descending": "Descending"
   },
   "logStatus": {
     "stopped": "stopped",
     "error": "error",
     "success": "success"
+  },
+  "workflowRun": {
+    "success": "Successfully ran the \"{name}\" workflow",
+    "failed": "Failed to run the \"{name}\" workflow"
   }
 }

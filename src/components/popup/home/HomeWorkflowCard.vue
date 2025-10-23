@@ -11,8 +11,12 @@
         {{ dayjs(workflow.createdAt).fromNow() }}
       </p>
     </div>
-    <p v-if="workflow.isDisabled">Disabled</p>
-    <button v-else title="Execute" @click="$emit('execute', workflow)">
+    <p v-if="workflow.isDisabled">{{ t('common.disabled') }}</p>
+    <button
+      v-else
+      :title="t('common.execute')"
+      @click="$emit('execute', workflow)"
+    >
       <v-remixicon name="riPlayLine" />
     </button>
     <v-remixicon
@@ -42,7 +46,9 @@
             @click="$emit('togglePin')"
           >
             <v-remixicon name="riPushpin2Line" class="mr-2 -ml-1" />
-            <span>{{ pinned ? 'Unpin workflow' : 'Pin workflow' }}</span>
+            <span>
+              {{ pinned ? t('home.workflow.unpin') : t('home.workflow.pin') }}
+            </span>
           </ui-list-item>
         </template>
         <ui-list-item
@@ -53,7 +59,7 @@
           @click="$emit(item.name, workflow)"
         >
           <v-remixicon :name="item.icon" class="mr-2 -ml-1" />
-          <span>{{ item.name }}</span>
+          <span>{{ t(`common.${item.name}`) }}</span>
         </ui-list-item>
       </ui-list>
     </ui-popover>

@@ -4,7 +4,9 @@
     "title": "Recording"
   },
   "home": {
+    "folderAll": "Folder (all)",
     "record": {
+      "tooltip": "Start recording by opening the dashboard. Click to learn more",
       "title": "Record workflow",
       "button": "Record",
       "name": "Workflow name",
@@ -25,8 +27,12 @@
       "delete": "Delete workflow",
       "type": {
         "host": "Host",
-        "local": "Local"
-      }
+        "local": "Local",
+        "team": "Teams"
+      },
+      "pinned": "Pinned workflows",
+      "pin": "Pin workflow",
+      "unpin": "Unpin workflow"
     }
   }
 }

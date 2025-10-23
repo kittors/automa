@@ -20,7 +20,7 @@
           v-if="data.isDisabled"
           class="text-sm text-gray-600 dark:text-gray-200"
         >
-          Disabled
+          {{ t('common.disabled') }}
         </span>
         <button
           v-else-if="!disabled"
@@ -71,6 +71,7 @@
 <script setup>
 import dayjs from '@/lib/dayjs';
 import { shallowReactive } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
   disabled: Boolean,
@@ -98,4 +99,6 @@ const state = shallowReactive({
   triggerText: null,
   date: dayjs(props.data.createdAt).fromNow(),
 });
+
+const { t } = useI18n();
 </script>

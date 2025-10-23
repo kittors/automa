@@ -4,7 +4,7 @@
       <ui-select
         v-model="state.selectedBlock"
         class="mr-4 flex-1 p-0.5"
-        placeholder="Select block"
+        :placeholder="$t('common.selectBlock')"
         @change="onSelectChanged"
       >
         <option v-for="(block, id) in blocks" :key="id" :value="id">
@@ -16,7 +16,7 @@
         variant="accent"
         @click="executeBlock"
       >
-        Execute
+        {{ $t('common.execute') }}
       </ui-button>
     </div>
     <component
