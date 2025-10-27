@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Automa Bridge</title></head>
+    <body>
+      <h3>Automa Web Bridge</h3>
+      <p id="ext">Waiting for extension...</p>
+      <script>
+        const ver = document.body.getAttribute('data-atm-ext-installed');
+        const el = document.getElementById('ext');
+        el.textContent = ver ? ('Extension detected: ' + ver) : 'Extension not detected yet';
+        const obs = new MutationObserver(() => {
+          const v = document.body.getAttribute('data-atm-ext-installed');
+          if (v) el.textContent = 'Extension detected: ' + v;
+        });
+        obs.observe(document.body, { attributes: true, attributeFilter: ['data-atm-ext-installed'] });
+      </script>
+    </body></html>

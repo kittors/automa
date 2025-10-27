@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Automa Runner Demo</title>
+    <style>body{font-family:Arial,Helvetica,sans-serif;padding:24px;} #logs{white-space:pre-wrap;background:#111;color:#ddd;padding:12px;border-radius:8px;min-height:160px}</style>
+    </head>
+    <body>
+      <h2>Automa Runner Demo</h2>
+      <button id="btn">开始执行（打开百度进行搜索）123123</button>
+      <div style="margin-top:12px">
+        <div>Run ID: <span id="run"></span></div>
+      </div>
+      <h3>Logs</h3>
+      <div id="logs"></div>
+      <script>
+        const logsEl = document.getElementById('logs');
+        function log(line){ logsEl.textContent += line + '\\n'; }
+        async function start(){
+          logsEl.textContent = '';
+          const res = await fetch('/api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowFile: 'baidu-search.json' }) });
+          const data = await res.json();
+          document.getElementById('run').textContent = data.runId || '';
+          const es = new EventSource('/api/runs/' + data.runId + '/stream');
+          es.onmessage = (ev) => { try{ const m = JSON.parse(ev.data); log('['+m.ts+'] ' + m.type + ' - ' + (m.text||'')); }catch(e){} };
+          es.addEventListener('end', ()=> es.close());
+        }
+        document.getElementById('btn').addEventListener('click', start);
+      </script>
+    </body></html>

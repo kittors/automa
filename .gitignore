@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+# ignore nested node_modules in subpackages (e.g., runner/node_modules)
+node_modules
 
 # testing
 /coverage
@@ -19,6 +21,12 @@
 .env.production.local
 .history
 *.log
+
+# runner service (Playwright) artifacts
+/runner/node_modules
+/runner/.tmp
+/runner/tmp
+/runner/.profile
 
 # secrets
 secrets.production.js

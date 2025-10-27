@@ -1,0 +1,17 @@
+{
+  "name": "automa-runner",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Local API service to run Automa workflows via Playwright",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "NODE_ENV=development node src/server.js",
+    "playwright:install": "playwright install chromium"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "nanoid": "^5.0.6",
+    "playwright": "^1.48.2"
+  }
+}

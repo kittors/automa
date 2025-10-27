@@ -1,0 +1,218 @@
+{
+  "extVersion": "1.29.12",
+  "name": "打开百度进行搜索",
+  "icon": "riGlobalLine",
+  "table": [],
+  "version": "1.29.12",
+  "drawflow": {
+    "edges": [
+      {
+        "class": "source-J0xn6J_mpjKaaoUHSJyb0-output-1 target-u4km2yq-input-1",
+        "data": {},
+        "id": "vueflow__edge-J0xn6J_mpjKaaoUHSJyb0J0xn6J_mpjKaaoUHSJyb0-output-1-u4km2yqu4km2yq-input-1",
+        "label": "",
+        "markerEnd": "arrowclosed",
+        "selectable": true,
+        "source": "J0xn6J_mpjKaaoUHSJyb0",
+        "sourceHandle": "J0xn6J_mpjKaaoUHSJyb0-output-1",
+        "sourceX": 274.46153846153845,
+        "sourceY": 297.499995304988,
+        "target": "u4km2yq",
+        "targetHandle": "u4km2yq-input-1",
+        "targetX": 341.38460599459137,
+        "targetY": 305.2307645357572,
+        "type": "custom",
+        "updatable": true
+      },
+      {
+        "data": {},
+        "id": "vueflow__edge-u4km2yqu4km2yq-output-1-pe8as2ipe8as2i-input-1",
+        "label": "",
+        "markerEnd": "arrowclosed",
+        "selectable": true,
+        "source": "u4km2yq",
+        "sourceHandle": "u4km2yq-output-1",
+        "sourceX": 581.3846153846155,
+        "sourceY": 305.2307645357572,
+        "target": "pe8as2i",
+        "targetHandle": "pe8as2i-input-1",
+        "targetX": 655.2307598407451,
+        "targetY": 295.2307645357572,
+        "type": "custom",
+        "updatable": true
+      },
+      {
+        "class": "connected-edges",
+        "data": {},
+        "id": "vueflow__edge-pe8as2ipe8as2i-output-1-9yhlztg9yhlztg-input-1",
+        "label": "",
+        "markerEnd": "arrowclosed",
+        "selectable": true,
+        "source": "pe8as2i",
+        "sourceHandle": "pe8as2i-output-1",
+        "sourceX": 895.2307692307692,
+        "sourceY": 295.2307645357572,
+        "target": "9yhlztg",
+        "targetHandle": "9yhlztg-input-1",
+        "targetX": 620.7561463043667,
+        "targetY": 496.4395984016128,
+        "type": "custom",
+        "updatable": true
+      }
+    ],
+    "nodes": [
+      {
+        "data": {
+          "activeInInput": false,
+          "contextMenuName": "",
+          "contextTypes": [],
+          "date": "",
+          "days": [],
+          "delay": 5,
+          "description": "",
+          "disableBlock": false,
+          "interval": 60,
+          "isUrlRegex": false,
+          "observeElement": {
+            "baseElOptions": {
+              "attributeFilter": [],
+              "attributes": false,
+              "characterData": false,
+              "childList": true,
+              "subtree": false
+            },
+            "baseSelector": "",
+            "matchPattern": "",
+            "selector": "",
+            "targetOptions": {
+              "attributeFilter": [],
+              "attributes": false,
+              "characterData": false,
+              "childList": true,
+              "subtree": false
+            }
+          },
+          "parameters": [],
+          "preferParamsInTab": false,
+          "shortcut": "",
+          "time": "00:00",
+          "type": "manual",
+          "url": ""
+        },
+        "id": "J0xn6J_mpjKaaoUHSJyb0",
+        "initialized": false,
+        "label": "trigger",
+        "position": {
+          "x": 58.46153846153845,
+          "y": 261.5
+        },
+        "type": "BlockBasic"
+      },
+      {
+        "data": {
+          "active": true,
+          "customUserAgent": false,
+          "description": "打开百度页面",
+          "disableBlock": false,
+          "inGroup": false,
+          "tabZoom": 1,
+          "updatePrevTab": false,
+          "url": "www.baidu.com",
+          "userAgent": "",
+          "waitTabLoaded": false
+        },
+        "id": "u4km2yq",
+        "initialized": false,
+        "label": "new-tab",
+        "position": {
+          "x": 365.3846153846154,
+          "y": 269.2307692307692
+        },
+        "type": "BlockBasic"
+      },
+      {
+        "data": {
+          "assignVariable": false,
+          "clearValue": true,
+          "dataColumn": "",
+          "delay": 0,
+          "description": "输入搜索内容",
+          "disableBlock": false,
+          "events": [],
+          "findBy": "cssSelector",
+          "getValue": false,
+          "markEl": false,
+          "multiple": false,
+          "optionPosition": "1",
+          "saveData": false,
+          "selectOptionBy": "value",
+          "selected": true,
+          "selector": "textarea[id=\"chat-textarea\"]",
+          "type": "text-field",
+          "value": "github Kittors",
+          "variableName": "",
+          "waitForSelector": false,
+          "waitSelectorTimeout": 5000
+        },
+        "id": "pe8as2i",
+        "initialized": false,
+        "label": "forms",
+        "position": {
+          "x": 679.2307692307692,
+          "y": 259.2307692307692
+        },
+        "type": "BlockBasic"
+      },
+      {
+        "data": {
+          "description": "点击“搜索”按钮",
+          "disableBlock": false,
+          "findBy": "cssSelector",
+          "markEl": false,
+          "multiple": false,
+          "selector": "button#chat-submit-button",
+          "waitForSelector": false,
+          "waitSelectorTimeout": 5000
+        },
+        "id": "9yhlztg",
+        "initialized": false,
+        "label": "event-click",
+        "position": {
+          "x": 644.756202644511,
+          "y": 460.4395796215647
+        },
+        "type": "BlockBasic"
+      }
+    ],
+    "position": [
+      56.742580364031255,
+      136.02917498547885
+    ],
+    "viewport": {
+      "x": 56.742580364031255,
+      "y": 136.02917498547885,
+      "zoom": 0.5578765203195996
+    },
+    "zoom": 0.5578765203195996
+  },
+  "settings": {
+    "aipowerToken": "",
+    "blockDelay": 0,
+    "debugMode": false,
+    "defaultColumnName": "column",
+    "execContext": "popup",
+    "executedBlockOnWeb": false,
+    "inputAutocomplete": true,
+    "insertDefaultColumn": false,
+    "notification": true,
+    "onError": "stop-workflow",
+    "publicId": "",
+    "restartTimes": 3,
+    "reuseLastState": false,
+    "saveLog": true
+  },
+  "globalData": "{\n\t\"key\": \"value\"\n}",
+  "description": "打开百度进行搜索",
+  "includedWorkflows": {}
+}
+
