@@ -142,15 +142,38 @@ message.on('workflow:stop', (stateId) =>
   BackgroundWorkflowUtils.instance.stopExecution(stateId)
 );
 message.on('workflow:execute', async (workflowData, sender) => {
-  if (workflowData.includeTabId) {
+  try {
     if (!workflowData.options) workflowData.options = {};
-    workflowData.options.tabId = sender.tab.id;
-  }
 
-  BackgroundWorkflowUtils.instance.executeWorkflow(
-    workflowData,
-    workflowData?.options || {}
-  );
+    // If caller requested current tab or tabId not provided, try to resolve one
+    const needTabId =
+      Boolean(workflowData.includeTabId) || !workflowData.options.tabId;
+
+    if (needTabId && !workflowData.options.tabId) {
+      // Prefer sender.tab if available (e.g., from content scripts)
+      const senderTabId = sender?.tab?.id;
+      if (senderTabId) {
+        workflowData.options.tabId = senderTabId;
+      } else {
+        // Fallback to the active tab in the last focused window
+        const [activeTab] = await browser.tabs.query({
+          active: true,
+          lastFocusedWindow: true,
+          url: '*://*/*',
+        });
+        if (activeTab?.id) {
+          workflowData.options.tabId = activeTab.id;
+        }
+      }
+    }
+
+    BackgroundWorkflowUtils.instance.executeWorkflow(
+      workflowData,
+      workflowData?.options || {}
+    );
+  } catch (e) {
+    console.error('Failed to start workflow:', e);
+  }
 });
 message.on(
   'workflow:added',

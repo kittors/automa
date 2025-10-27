@@ -40,14 +40,25 @@ async function newTab({ id, data }) {
       });
   }
 
-  if (!isValidURL(data.url)) {
+  // Normalize URL: allow inputs without scheme like "baidu.com" -> https://baidu.com
+  let inputUrl = (data.url || '').trim();
+  const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(inputUrl);
+  if (!isValidURL(inputUrl)) {
+    const likelyHost =
+      /\./.test(inputUrl) ||
+      /^(localhost|127\.0\.0\.1|::1)(:\d+)?(\/|$)/i.test(inputUrl);
+    if (inputUrl && !hasScheme && likelyHost) {
+      inputUrl = `https://${inputUrl}`;
+    }
+  }
+  if (!isValidURL(inputUrl)) {
     const error = new Error(
-      isWhitespace(data.url) ? 'url-empty' : 'invalid-active-tab'
+      isWhitespace(inputUrl) ? 'url-empty' : 'invalid-active-tab'
     );
-    error.data = { url: data.url };
-
+    error.data = { url: inputUrl };
     throw error;
   }
+  data.url = inputUrl;
 
   let tab = null;
   const isChrome = BROWSER_TYPE === 'chrome';
