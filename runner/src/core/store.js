@@ -1,4 +1,5 @@
 // 简单内存态存储：仅在进程生命周期内保存一次运行的状态/日志
+import { printSseEntry } from './logger.js';
 const runs = new Map();
 
 // 初始化一次运行（返回可变状态对象）
@@ -13,7 +14,7 @@ export function getRun(runId) {
   return runs.get(runId);
 }
 
-// 追加日志并广播给 SSE 监听者
+// 追加日志并广播给 SSE 监听者，并在服务端以彩色输出
 export function pushLog(runId, entry) {
   const s = runs.get(runId);
   if (!s) return;
@@ -21,6 +22,8 @@ export function pushLog(runId, entry) {
   s.lastLogAt = entry.ts;
   const listeners = s.__listeners || [];
   for (const res of listeners) res.write(`data: ${JSON.stringify(entry)}\n\n`);
+
+  try { printSseEntry(runId, entry); } catch (_) {}
 }
 
 // 订阅指定运行的日志流（SSE）

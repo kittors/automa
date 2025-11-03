@@ -1,6 +1,6 @@
 # Multi-arch ready image with Chromium and dependencies preinstalled
 # Match Playwright version in package.json (1.48.2)
-FROM mcr.microsoft.com/playwright:v1.48.2-jammy
+FROM mcr.microsoft.com/playwright:v1.56.1-jammy
 
 WORKDIR /app/runner
 
@@ -11,19 +11,22 @@ RUN npm install --omit=dev && npm cache clean --force
 # App source
 COPY . .
 
+# Entrypoint for robust startup + diagnostics
+COPY entry.sh /entry.sh
+RUN chmod +x /entry.sh
+
 # Ensure required dirs exist inside image (can be mounted in compose)
 RUN mkdir -p .profile public workflows
 
-# Default port
+# Default network/options
+ENV HOST=0.0.0.0
 ENV PORT=3100
+ENV HEADLESS=false
 EXPOSE 3100
-
-# Use non-root user provided by Playwright base image
-USER pwuser
 
 # Healthcheck: ensure web server responds
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=5 \
-  CMD node -e "require('http').get('http://localhost:3100/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+  CMD node -e "(p=>require('http').get('http://localhost:'+p+'/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1)))(process.env.PORT||3100)"
 
-# Run under Xvfb so Chromium can start in headful mode inside container
-CMD ["bash", "-lc", "xvfb-run -a node src/server.js"]
+# Start via entrypoint (selects headless/xvfb based on HEADLESS)
+CMD ["/entry.sh"]

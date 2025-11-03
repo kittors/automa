@@ -5,14 +5,20 @@ services:
       context: .
       dockerfile: Dockerfile
     user: "0:0" # 以 root 运行，避免挂载目录权限问题
+    env_file:
+      - .env
     environment:
+      - HOST=${HOST:-0.0.0.0}
       - PORT=${PORT:-3100}
       - OPEN_BRIDGE=${OPEN_BRIDGE:-true}
       - HEADLESS=${HEADLESS:-false}
       - PROFILE_MODE=${PROFILE_MODE:-shared}
       - PERSIST_RUN_PROFILE=${PERSIST_RUN_PROFILE:-false}
+      # 注意：使用 "-"（而非 ":-")，这样当 .env 中 PW_DEBUG 为空时，不会回退到默认值
+      - PW_DEBUG=${PW_DEBUG-}
+      - NO_SANDBOX=${NO_SANDBOX:-true}
     ports:
-      - "${PORT:-3100}:3100"
+      - "${PORT:-3100}:${PORT:-3100}"
     # Keep Chromium stable and persist user profile across restarts
     shm_size: "1gb"
     volumes:

@@ -1,11 +1,30 @@
 import fs from 'fs';
 import path from 'path';
-import { chromium } from 'playwright';
 import { delay, now } from './utils.js';
+import { PW_DEBUG, NO_SANDBOX } from '../web/config.js';
+
+let __chromium = null;
+async function getChromium() {
+  if (__chromium) return __chromium;
+  // 设置 Playwright 调试日志（基于 debug 库），需在首次加载 Playwright 之前设置
+  try {
+    if (PW_DEBUG && typeof process !== 'undefined') {
+      const current = process.env.DEBUG || '';
+      const parts = new Set(current.split(',').filter(Boolean));
+      PW_DEBUG.split(',').filter(Boolean).forEach((p) => parts.add(p));
+      process.env.DEBUG = Array.from(parts).join(',');
+      process.env.DEBUG_COLORS = process.env.DEBUG_COLORS || '1';
+    }
+  } catch (_) {}
+  const mod = await import('playwright');
+  __chromium = mod.chromium;
+  return __chromium;
+}
 
 // 启动持久化浏览器上下文（加载扩展 + 关闭首次启动提示）
 export async function launchContext({ buildDir, userDataDir, headless = false }) {
   fs.mkdirSync(userDataDir, { recursive: true });
+  const chromium = await getChromium();
   const context = await chromium.launchPersistentContext(userDataDir, {
     headless,
     args: [
@@ -14,6 +33,7 @@ export async function launchContext({ buildDir, userDataDir, headless = false })
       '--no-first-run',
       '--no-default-browser-check',
       '--disable-session-crashed-bubble',
+      ...(NO_SANDBOX ? ['--no-sandbox'] : []),
     ],
   });
   return context;

@@ -2,6 +2,8 @@
 node_modules
 .tmp
 .profile
+.env
+.env.*
 .DS_Store
 .vscode
 .idea
@@ -14,4 +16,3 @@ dist
 .github
 Dockerfile
 docker-compose.yml
-
