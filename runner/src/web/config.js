@@ -15,3 +15,8 @@ export const OPEN_BRIDGE = process.env.OPEN_BRIDGE ? process.env.OPEN_BRIDGE !==
 export const HEADLESS = process.env.HEADLESS ? process.env.HEADLESS === 'true' : false; // 是否无头
 export const PROFILE_MODE = process.env.PROFILE_MODE === 'per-run' ? 'per-run' : 'shared'; // 用户目录模式：shared(默认)/per-run
 export const PERSIST_RUN_PROFILE = process.env.PERSIST_RUN_PROFILE === 'true'; // per-run 模式下是否保留用户目录
+// 结束策略：timeout(默认，仅按超时关闭)/idle(网络空闲即结束)/triggered(触发后立刻结束)
+export const FINISH_POLICY = ['idle', 'triggered'].includes(process.env.FINISH_POLICY || '')
+  ? process.env.FINISH_POLICY
+  : 'timeout';
+export const IDLE_MS = process.env.IDLE_MS ? Number(process.env.IDLE_MS) : 3000; // 空闲阈值

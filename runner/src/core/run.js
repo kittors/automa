@@ -1,10 +1,11 @@
 import fs from 'fs';
 import path from 'path';
-import { runnerRoot, buildDir, PORT, OPEN_BRIDGE, HEADLESS, PROFILE_MODE, PERSIST_RUN_PROFILE } from '../web/config.js';
+import { runnerRoot, buildDir, PORT, OPEN_BRIDGE, HEADLESS, PROFILE_MODE, PERSIST_RUN_PROFILE, FINISH_POLICY, IDLE_MS } from '../web/config.js';
 import { readJSON, delay, now } from './utils.js';
 import {
   launchContext,
   attachLogging,
+  waitForContextIdle,
   findExtensionIdViaCDP,
   findExtensionIdFromProfile,
   closeWelcomePages,
@@ -18,7 +19,7 @@ import { triggerViaExecutePage } from './trigger.js';
 // 3) 关闭扩展欢迎页（避免打扰）
 // 4) 打开 execute.html 并向 background 发送执行消息
 // 5) 等待一段时间便于观察日志/页面行为，最后关闭上下文
-export async function runWorkflow({ runId, workflow, variables = {}, timeoutMs = 120000, log, openBridge = OPEN_BRIDGE }) {
+export async function runWorkflow({ runId, workflow, variables = {}, timeoutMs = 120000, log, openBridge = OPEN_BRIDGE, finishPolicy = FINISH_POLICY, idleMs = IDLE_MS }) {
   const userDataDir = PROFILE_MODE === 'per-run'
     ? path.join(runnerRoot, '.tmp', 'profiles', runId)
     : path.join(runnerRoot, '.profile');
@@ -45,8 +46,17 @@ export async function runWorkflow({ runId, workflow, variables = {}, timeoutMs =
   await closeWelcomePages(context, extId);
   await triggerViaExecutePage(context, extId, workflow, variables, log);
 
-  const endAt = Date.now() + timeoutMs;
-  while (Date.now() < endAt) await delay(1000);
+  // 结束策略：
+  if (finishPolicy === 'triggered') {
+    log({ type: 'info', text: 'Finish policy=triggered: ending immediately after trigger', ts: now() });
+  } else if (finishPolicy === 'idle') {
+    log({ type: 'info', text: `Finish policy=idle: waiting idle ${idleMs}ms (max ${timeoutMs}ms)`, ts: now() });
+    await waitForContextIdle(context, { idleMs, maxWaitMs: timeoutMs, log });
+  } else {
+    const endAt = Date.now() + timeoutMs;
+    log({ type: 'info', text: `Finish policy=timeout: waiting ${timeoutMs}ms`, ts: now() });
+    while (Date.now() < endAt) await delay(1000);
+  }
 
   await context.close();
   // 清理 per-run 的用户目录（可保留用于排查）

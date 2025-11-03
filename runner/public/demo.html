@@ -27,7 +27,8 @@
           logsEl.textContent = '';
           runEl.textContent = '';
           try{
-            const res = await fetch('/api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowFile: 'baidu-search.json' }) });
+            const body = { workflowFile: 'baidu-search.json', finishPolicy: 'idle', idleMs: 3000, timeoutMs: 60000 };
+            const res = await fetch('/api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             const data = await res.json().catch(()=>({}));
 
             if(!res.ok){

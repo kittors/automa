@@ -57,7 +57,7 @@ API 说明
 - POST `/api/runs`
   - 参数（任选其一）
     - `{ "workflowFile": "baidu-search.json" }`
-    - `{ "workflow": { "name": "...", "drawflow": {...} }, "variables": { "k": "v" }, "timeoutMs": 120000 }`
+    - `{ "workflow": { "name": "...", "drawflow": {...} }, "variables": { "k": "v" }, "timeoutMs": 120000, "finishPolicy": "timeout|idle|triggered", "idleMs": 3000 }`
   - 返回：`{ runId }`
 
 - GET `/api/runs/:runId`
@@ -72,6 +72,8 @@ API 说明
 - `HEADLESS`：是否以无头模式启动 Chromium（默认 false）。在服务器环境可设为 `true`。
 - `PROFILE_MODE`：用户目录模式，`shared`（默认）或 `per-run`。`shared` 性能稍好但禁止并发（第二次调用会返回 409 busy）；`per-run` 为每次运行创建独立目录，允许并发执行。
 - `PERSIST_RUN_PROFILE`：配合 `PROFILE_MODE=per-run` 使用，设为 `true` 时保留每次运行的用户目录（便于定位问题），默认不保留。
+- `FINISH_POLICY`：结束策略，`timeout`（默认，仅按超时关闭）、`idle`（网络空闲即结束）、`triggered`（触发后立刻结束）。
+- `IDLE_MS`：与 `FINISH_POLICY=idle` 搭配，判定“空闲”的时间阈值（默认 3000ms）。
 
 Docker 部署
 - 前置要求

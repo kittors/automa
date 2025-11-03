@@ -36,6 +36,47 @@ export function attachLogging(context, log) {
   context.on('page', attach);
 }
 
+// 监控上下文的活动情况，用于实现“网络空闲即结束”的策略
+export function waitForContextIdle(context, { idleMs = 3000, maxWaitMs = 120000, log } = {}) {
+  let active = 0;
+  let lastActivity = Date.now();
+
+  const touch = (why) => {
+    lastActivity = Date.now();
+    if (why && log) log({ type: 'trace', text: `activity: ${why}`, ts: now() });
+  };
+
+  const attach = (page) => {
+    page.on('request', () => { active++; touch('request'); });
+    const dec = () => { if (active > 0) active--; touch('request-done'); };
+    page.on('requestfinished', dec);
+    page.on('requestfailed', dec);
+    page.on('console', () => touch('console'));
+    page.on('framenavigated', () => touch('navigated'));
+  };
+
+  context.pages().forEach(attach);
+  context.on('page', attach);
+
+  const start = Date.now();
+  return new Promise(async (resolve) => {
+    for (;;) {
+      const nowTs = Date.now();
+      const idleFor = nowTs - lastActivity;
+      if (active === 0 && idleFor >= idleMs) {
+        if (log) log({ type: 'info', text: `Context idle for ${idleFor}ms`, ts: now() });
+        break;
+      }
+      if (nowTs - start > maxWaitMs) {
+        if (log) log({ type: 'warn', text: 'Idle wait timed out; finishing by timeout', ts: now() });
+        break;
+      }
+      await delay(200);
+    }
+    resolve();
+  });
+}
+
 // 通过 CDP 查询扩展的 service_worker，从其 URL 中解析扩展 ID（更稳）
 export async function findExtensionIdViaCDP(context, timeoutMs = 15000) {
   const client = await context.browser().newBrowserCDPSession();
