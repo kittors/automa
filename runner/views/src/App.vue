@@ -1,6 +1,6 @@
 <template>
   <DefaultLayout>
-    <MainView />
+    <router-view />
   </DefaultLayout>
  </template>
 

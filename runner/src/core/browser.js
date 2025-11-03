@@ -42,7 +42,22 @@ export async function launchContext({ buildDir, userDataDir, headless = false })
 // 为上下文内的所有页面绑定日志事件，便于在后端观察运行过程
 export function attachLogging(context, log) {
   const attach = (page) => {
-    page.on('console', (msg) => log({ type: 'console', text: msg.text(), ts: now() }));
+    page.on('console', (msg) => {
+      try {
+        const text = msg.text();
+        const prefix = '[RUNNER:STATE]';
+        if (text && text.startsWith(prefix)) {
+          const json = text.slice(prefix.length).trim();
+          try {
+            const data = JSON.parse(json);
+            return log({ type: 'wfstate', text: '', data, ts: now() });
+          } catch (_) {}
+        }
+        log({ type: 'console', text, ts: now() });
+      } catch (_) {
+        log({ type: 'console', text: '<console>', ts: now() });
+      }
+    });
     page.on('pageerror', (err) => log({ type: 'pageerror', text: err.message, ts: now() }));
     page.on('requestfailed', (req) =>
       log({ type: 'requestfailed', text: `${req.failure()?.errorText} ${req.url()}`, ts: now() })

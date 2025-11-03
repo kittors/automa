@@ -19,7 +19,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import UiSelect from './UiSelect.vue';
+import UiSelect from '../ui/UiSelect.vue';
 
 const props = defineProps({
   workflows: { type: Array, default: () => [] },

@@ -29,7 +29,7 @@ runner/
 │     ├─ logger.js             统一彩色日志工具（启动横幅、请求日志、SSE 终端输出）
 │     └─ utils.js              通用函数（now/delay/readJSON）
 ├─ public/
-│  ├─ demo/                    Vue Demo 构建产物目录（`pnpm run demo:build` 生成）
+│  ├─ views/                   前端视图构建产物目录（`pnpm run web:build` 生成）
 │  │  └─ index.html
 │  └─ bridge.html              普通 http 页面（保持一个用户页签，无逻辑要求）
 └─ workflows/
@@ -40,7 +40,7 @@ runner/
 ```
 
 执行链路
-1) Demo 页面调用 `POST /api/runs`，传入 `workflowFile` 或直接传 `workflow`。
+1) 前端页面调用 `POST /api/runs`，传入 `workflowFile` 或直接传 `workflow`。
 2) Runner 启动带扩展的 Chromium，输出导航/控制台日志到 SSE。
 3) Runner 打开 `execute.html`，向扩展 background 发送 `workflow:execute` 消息并立即关闭该页。
 4) 扩展后台在 offscreen/service worker 环境执行工作流，与目标页面交互。
@@ -61,12 +61,12 @@ runner/
    - `pnpm run dev`
    - 内容：
      - 后端：nodemon 监听 `runner/src`，变更自动重启 Express。
-     - 前端：以 Vite 中间件模式挂载到同一端口（3100），`/demo` 支持 HMR。
-5) 打开 Demo 页面
-   - http://localhost:3100/demo（开发：Vite HMR；生产：使用构建后的静态文件）
+   - 前端：以 Vite 中间件模式挂载到同一端口（3100），`/app` 支持 HMR。
+5) 打开前端页面
+   - http://localhost:3100/app（开发：Vite HMR；生产：使用构建后的静态文件）
 6) 可选：手动构建或单独前端开发
-   - 生产构建：`pnpm run demo:build`（产物输出到 `runner/public/demo`）
-   - 仅前端开发：`pnpm run demo:dev`（Vite 独立端口，已代理到 Runner）
+   - 生产构建：`pnpm run web:build`（产物输出到 `runner/public/views`）
+   - 仅前端开发：`pnpm run web:dev`（Vite 独立端口，已代理到 Runner）
 
 API 说明
 - POST `/api/runs`
@@ -82,7 +82,7 @@ API 说明
 
 - GET `/api/workflows`
   - 返回：`{ items: [{ file, name }] }`
-  - 用途：列出 `runner/workflows/*.json`，Demo 页面用于下拉选择不同工作流。
+  - 用途：列出 `runner/workflows/*.json`，前端页面用于下拉选择不同工作流。
 
 - GET `/api/runs/:runId`
   - 返回：`{ status, createdAt, endedAt?, logs: [] }`
@@ -145,7 +145,7 @@ API 说明
 日志与可观测性
 - 终端彩色输出（统一于 `src/core/logger.js`）
   - 启动横幅与常规信息：绿色
-  - 访问链接（/health、/demo）与 3xx：亮蓝
+  - 访问链接（/health、/app）与 3xx：亮蓝
   - 警告与 4xx：黄色
   - 错误（error/pageerror/requestfailed）与 5xx：红色
 - 请求日志：`[web] METHOD PATH -> STATUS 耗时`，自动着色
@@ -171,7 +171,7 @@ Docker 部署
   - `./public -> /app/runner/public`：演示页面与桥接页。
 
 - 验证
-  - 打开：`http://localhost:3100/demo`
+  - 打开：`http://localhost:3100/app`
   - 健康检查：`http://localhost:3100/health`（返回 JSON，包含目录与扩展是否就绪）
   - 或调用：
     - `curl -X POST http://localhost:3100/api/runs -H 'Content-Type: application/json' -d '{ "workflowFile": "baidu-search.json" }'`
@@ -179,7 +179,7 @@ Docker 部署
 - 说明
   - 镜像基于 Playwright 官方镜像构建，容器启动由 `entry.sh` 后台启动 Xvfb（`DISPLAY=:99`），随后启动 Node 服务，可在容器中以“有头”模式运行 Chromium（无需外接显示）。
   - 在容器内浏览器访问 `localhost:<PORT>` 即访问 Runner 自身，因此 `bridge.html` 可正常打开。
-  - 访问根路径 `http://localhost:<PORT>` 会跳转到 `/demo`，若服务未启动或网络不通会在浏览器看到连接失败；此时请查看容器日志：`docker compose logs -f`。
+  - 访问根路径 `http://localhost:<PORT>` 会跳转到 `/app`，若服务未启动或网络不通会在浏览器看到连接失败；此时请查看容器日志：`docker compose logs -f`。
   - Compose 已声明 `env_file: .env`，镜像构建时 `.env*` 不会被打包（已在 `.dockerignore` 排除）。
   - 关闭 Playwright 日志（Compose）：将 `runner/.env` 中 `PW_DEBUG=` 留空即可；compose 中已使用 `PW_DEBUG=${PW_DEBUG-}`，空值不会被覆盖为默认。
   - Playwright 版本需与基础镜像一致：当前 `runner/package.json` 使用 `playwright@1.56.1`，Dockerfile 基于 `mcr.microsoft.com/playwright:v1.56.1-jammy`。若升级 `playwright`，请同步更新 Dockerfile 的基镜标签后重建镜像（`docker compose build --no-cache`）。
@@ -261,7 +261,7 @@ PM2 部署
 故障排查（Debug）
 - 如何确认服务已启动？
   - 浏览器打开：`http://localhost:3100/health`（应返回 JSON 且 `ok: true`）。
-  - 访问根路径会跳转到 `/demo`：`http://localhost:3100/`。
+  - 访问根路径会跳转到 `/app`：`http://localhost:3100/`。
   - 启动日志会打印完整配置信息（端口、目录、扩展 manifest 状态、Playwright 版本等）。
   - Docker 模式
     - 查看日志：`docker compose logs -f`。

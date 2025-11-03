@@ -8,8 +8,8 @@
     "start": "node src/server.js",
     "dev": "NODE_ENV=development nodemon --watch src --ext js,json --signal SIGTERM --exec node src/server.js",
     "playwright:install": "playwright install chromium",
-    "demo:dev": "vite --config demo/vite.config.mjs",
-    "demo:build": "vite build --config demo/vite.config.mjs"
+    "web:dev": "vite --config views/vite.config.mjs",
+    "web:build": "vite build --config views/vite.config.mjs"
   },
   "dependencies": {
     "express": "^4.19.2",
@@ -17,7 +17,8 @@
     "playwright": "1.56.1",
     "vue": "3.4.38",
     "lucide-vue-next": "^0.378.0",
-    "axios": "^1.7.7"
+    "axios": "^1.7.7",
+    "vue-router": "^4.4.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.7",

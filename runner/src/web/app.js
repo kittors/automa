@@ -2,11 +2,24 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { nanoid } from 'nanoid';
-import { publicDir, workflowsDir, PORT, buildDir, PROFILE_MODE } from './config.js';
+import { publicDir, workflowsDir, PORT, buildDir, PROFILE_MODE, repoRoot } from './config.js';
 import { readJSON, now } from '../core/utils.js';
 import { runWorkflow } from '../core/run.js';
 import { initRun, getRun, pushLog, addListener, removeListener, listRuns, setRuntime, getRuntime, clearRuntime, addRunsListener, removeRunsListener, notifyRunsChanged } from '../core/store.js';
 import { requestLogger } from '../core/logger.js';
+// 延迟读取中文块名称表，避免 ESM JSON import 兼容性问题
+let __zhBlocks = null;
+function getZhBlocks() {
+  if (__zhBlocks) return __zhBlocks;
+  try {
+    const p = path.join(repoRoot, 'src', 'locales', 'zh', 'blocks.json');
+    if (fs.existsSync(p)) __zhBlocks = JSON.parse(fs.readFileSync(p, 'utf8'));
+    else __zhBlocks = {};
+  } catch (_) {
+    __zhBlocks = {};
+  }
+  return __zhBlocks;
+}
 
 export function createApp() {
   // Web 层仅负责：
@@ -18,9 +31,7 @@ export function createApp() {
   app.use(requestLogger());
   app.use(express.static(publicDir));
 
-  // '/demo' 路由在 server.js 中定义（以便按需构建）
-  
-  app.get('/', (req, res) => res.redirect('/demo'));
+  // 根路径的展示在 server.js 中统一处理（服务运行状态页）
 
   // 健康检查与运行状态
   const healthHandler = (req, res) => {
@@ -94,6 +105,13 @@ export function createApp() {
       notifyRunsChanged();
       if (wf && wf.name) state.workflowName = wf.name;
       else if (workflowFile) state.workflowName = workflowFile;
+
+      // 推送一次工作流元信息，便于前端展示节点进度
+      try {
+        const meta = buildWorkflowMeta(wf);
+        state.workflowMeta = meta;
+        pushLog(runId, { type: 'wfmeta', text: meta?.name || '', ts: now(), meta });
+      } catch (_) {}
 
       const log = (entry) => pushLog(runId, entry);
 
@@ -234,6 +252,55 @@ export function createApp() {
 
 // 模块级并发锁（shared profile 模式下生效）
 let sharedProfileLock = false;
+
+// 从 workflow JSON 中提取简化元信息（名称 + 有序节点列表）
+function buildWorkflowMeta(wf) {
+  if (!wf || !wf.drawflow) return { name: wf?.name || '', nodes: [] };
+  const edges = Array.isArray(wf.drawflow.edges) ? wf.drawflow.edges : [];
+  const nodes = Array.isArray(wf.drawflow.nodes) ? wf.drawflow.nodes : [];
+  const idToNode = new Map();
+  nodes.forEach((n) => idToNode.set(n.id, n));
+  // 计算入度
+  const indeg = new Map();
+  nodes.forEach((n) => indeg.set(n.id, 0));
+  edges.forEach((e) => {
+    if (idToNode.has(e.target)) indeg.set(e.target, (indeg.get(e.target) || 0) + 1);
+  });
+  // Kahn 拓扑排序（若图不完整则退化为原顺序）
+  const q = [];
+  for (const [id, d] of indeg) if (d === 0) q.push(id);
+  const ordered = [];
+  const outAdj = new Map();
+  edges.forEach((e) => {
+    if (!outAdj.has(e.source)) outAdj.set(e.source, []);
+    outAdj.get(e.source).push(e.target);
+  });
+  while (q.length) {
+    const id = q.shift();
+    if (idToNode.has(id)) ordered.push(id);
+    const outs = outAdj.get(id) || [];
+    for (const t of outs) {
+      const d = (indeg.get(t) || 0) - 1;
+      indeg.set(t, d);
+      if (d === 0) q.push(t);
+    }
+  }
+  // 若排序数量不足，补齐剩余节点
+  if (ordered.length < nodes.length) {
+    const rest = nodes.map((n) => n.id).filter((id) => !ordered.includes(id));
+    ordered.push(...rest);
+  }
+  const metaNodes = ordered.map((id) => {
+    const n = idToNode.get(id) || {};
+    const key = n.label || n.type || 'node';
+    // 翻译成中文名称（fallback 到英文 key）
+    const zh = getZhBlocks();
+    const cn = zh?.workflow?.blocks?.[key]?.name || key;
+    const desc = (n.data && (n.data.description || n.data.name)) || '';
+    return { id, label: cn, rawLabel: key, desc };
+  });
+  return { name: wf.name || '', nodes: metaNodes };
+}
   // 统一响应封装
   function ok(res, data = null, code = 200, msg = '') { res.status(code).json({ code, msg, data }); }
   function err(res, code = 500, msg = 'Internal Error', data = null) { res.status(code).json({ code, msg, data }); }

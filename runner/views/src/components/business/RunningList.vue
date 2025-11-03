@@ -31,8 +31,8 @@
 
 <script setup>
 import { computed } from 'vue';
-import { useRuns } from '../composables/useRuns.js';
-import ScrollArea from './ui/ScrollArea.vue';
+import { useRuns } from '../../composables/useRuns.js';
+import ScrollArea from '../ui/ScrollArea.vue';
 
 const { runs, loading, error, connected, stopRun } = useRuns();
 const activeRuns = computed(() => {

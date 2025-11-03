@@ -28,10 +28,48 @@ export async function triggerViaExecutePage(context, extId, workflowObj, variabl
         };
         if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
           chrome.runtime.sendMessage(msg);
+          // 观察 workflowStates 的变化并输出给控制台（由后端解析为 wfstate）
+          try {
+            const wfId = wf.id;
+            function emit(state) {
+              if (!state) return;
+              const list = Array.isArray(state) ? state : Object.values(state);
+              const item = (list || []).find((s) => s && (s.workflowId === wfId));
+              if (!item) return;
+              const current = (item.state && item.state.currentBlock && item.state.currentBlock[0]) || null;
+              const payload = { status: item.state?.status || '', blocks: item.state?.currentBlock || [], current };
+              // 特定前缀方便解析
+              console.log('[RUNNER:STATE]' + JSON.stringify(payload));
+            }
+            if (chrome.storage && chrome.storage.local) {
+              chrome.storage.local.get('workflowStates', ({ workflowStates }) => emit(workflowStates));
+              chrome.storage.local.onChanged.addListener((changes) => {
+                if (changes && changes.workflowStates) emit(changes.workflowStates.newValue);
+              });
+            }
+          } catch (e) {}
           return true;
         }
         if (window.browser && browser.runtime && browser.runtime.sendMessage) {
           browser.runtime.sendMessage(msg);
+          try {
+            const wfId = wf.id;
+            function emit(state) {
+              if (!state) return;
+              const list = Array.isArray(state) ? state : Object.values(state);
+              const item = (list || []).find((s) => s && (s.workflowId === wfId));
+              if (!item) return;
+              const current = (item.state && item.state.currentBlock && item.state.currentBlock[0]) || null;
+              const payload = { status: item.state?.status || '', blocks: item.state?.currentBlock || [], current };
+              console.log('[RUNNER:STATE]' + JSON.stringify(payload));
+            }
+            if (browser.storage && browser.storage.local) {
+              browser.storage.local.get('workflowStates').then(({ workflowStates }) => emit(workflowStates));
+              browser.storage.local.onChanged.addListener((changes) => {
+                if (changes && changes.workflowStates) emit(changes.workflowStates.newValue);
+              });
+            }
+          } catch (e) {}
           return true;
         }
         return false;
@@ -42,8 +80,6 @@ export async function triggerViaExecutePage(context, extId, workflowObj, variabl
     if (ok && ok.error) log({ type: 'error', text: `Trigger error: ${ok.error}`, ts: now() });
     else log({ type: 'info', text: 'Triggered workflow via extension page', ts: now() });
   } finally {
-    try {
-      await page.close();
-    } catch (_) {}
+    // 保持该页面打开，以便监听 workflowStates（关闭上下文时会自动关闭）
   }
 }

@@ -22,7 +22,7 @@
 
 <script setup>
 import { ref, watch, nextTick } from 'vue';
-import ScrollArea from './ui/ScrollArea.vue';
+import ScrollArea from '../ui/ScrollArea.vue';
 import { Info } from 'lucide-vue-next';
 
 const props = defineProps({ logs: { type: Array, default: () => [] } });

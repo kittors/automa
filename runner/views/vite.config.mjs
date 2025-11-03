@@ -7,7 +7,7 @@ export default defineConfig({
   base: './',
   plugins: [vue()],
   build: {
-    outDir: path.resolve(__dirname, '../public/demo'),
+    outDir: path.resolve(__dirname, '../public/views'),
     emptyOutDir: true,
     assetsDir: 'assets',
   },
@@ -20,4 +20,3 @@ export default defineConfig({
     },
   },
 });
-
