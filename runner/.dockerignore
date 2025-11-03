@@ -1,0 +1,17 @@
+# 忽略不需要进入镜像的内容，避免覆盖容器内依赖
+node_modules
+.tmp
+.profile
+.DS_Store
+.vscode
+.idea
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+build-zip
+dist
+.git
+.github
+Dockerfile
+docker-compose.yml
+
