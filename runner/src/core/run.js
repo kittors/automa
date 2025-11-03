@@ -19,7 +19,7 @@ import { triggerViaExecutePage } from './trigger.js';
 // 3) 关闭扩展欢迎页（避免打扰）
 // 4) 打开 execute.html 并向 background 发送执行消息
 // 5) 等待一段时间便于观察日志/页面行为，最后关闭上下文
-export async function runWorkflow({ runId, workflow, variables = {}, timeoutMs = 120000, log, openBridge = OPEN_BRIDGE, finishPolicy = FINISH_POLICY, idleMs = IDLE_MS }) {
+export async function runWorkflow({ runId, workflow, variables = {}, timeoutMs = 120000, log, openBridge = OPEN_BRIDGE, finishPolicy = FINISH_POLICY, idleMs = IDLE_MS, onContext }) {
   const userDataDir = PROFILE_MODE === 'per-run'
     ? path.join(runnerRoot, '.tmp', 'profiles', runId)
     : path.join(runnerRoot, '.profile');
@@ -30,6 +30,7 @@ export async function runWorkflow({ runId, workflow, variables = {}, timeoutMs =
 
   const context = await launchContext({ buildDir, userDataDir, headless: HEADLESS });
   attachLogging(context, log);
+  try { if (onContext) onContext(context); } catch (_) {}
   // 可选：打开本地 bridge 页面，作为一个常规 HTTP 页签存在
   if (openBridge) await openBridgePage(context, { port: PORT, log });
 

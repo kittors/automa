@@ -29,7 +29,8 @@ runner/
 │     ├─ logger.js             统一彩色日志工具（启动横幅、请求日志、SSE 终端输出）
 │     └─ utils.js              通用函数（now/delay/readJSON）
 ├─ public/
-│  ├─ demo.html                演示页面（点击按钮 → 调用 API → 显示实时日志）
+│  ├─ demo/                    Vue Demo 构建产物目录（`pnpm run demo:build` 生成）
+│  │  └─ index.html
 │  └─ bridge.html              普通 http 页面（保持一个用户页签，无逻辑要求）
 └─ workflows/
    └─ *.json                   工作流文件示例（默认 baidu-search.json）
@@ -56,10 +57,16 @@ runner/
    - 部署（Docker/PM2/线上）：在 `runner` 目录创建 `.env`
    - 本地开发（pnpm dev）：在 `runner` 目录创建 `.env.development`
    - 关键项：`HOST`、`PORT`、`PW_DEBUG`、`PROFILE_MODE`、`FINISH_POLICY` 等（见“环境配置”）
-4) 启动 Runner（默认 0.0.0.0:3100）
+4) 启动开发（热重载：前端 HMR + 后端自动重启）
    - `pnpm run dev`
-4) 打开 Demo 页面
-   - http://localhost:3100/demo
+   - 内容：
+     - 后端：nodemon 监听 `runner/src`，变更自动重启 Express。
+     - 前端：以 Vite 中间件模式挂载到同一端口（3100），`/demo` 支持 HMR。
+5) 打开 Demo 页面
+   - http://localhost:3100/demo（开发：Vite HMR；生产：使用构建后的静态文件）
+6) 可选：手动构建或单独前端开发
+   - 生产构建：`pnpm run demo:build`（产物输出到 `runner/public/demo`）
+   - 仅前端开发：`pnpm run demo:dev`（Vite 独立端口，已代理到 Runner）
 
 API 说明
 - POST `/api/runs`
@@ -68,11 +75,23 @@ API 说明
     - `{ "workflow": { "name": "...", "drawflow": {...} }, "variables": { "k": "v" }, "timeoutMs": 120000, "finishPolicy": "timeout|idle|triggered", "idleMs": 3000 }`
   - 返回：`{ runId }`
 
+- GET `/api/runs`
+  - 查询所有运行：`/api/runs`
+  - 仅查询运行中：`/api/runs?status=running`
+  - 返回：`{ items: [{ id, status, createdAt, endedAt?, lastLogAt?, workflowName?, logs: [...] }] }`
+
+- GET `/api/workflows`
+  - 返回：`{ items: [{ file, name }] }`
+  - 用途：列出 `runner/workflows/*.json`，Demo 页面用于下拉选择不同工作流。
+
 - GET `/api/runs/:runId`
   - 返回：`{ status, createdAt, endedAt?, logs: [] }`
 
 - GET `/api/runs/:runId/stream`（SSE）
   - 实时推送日志：`{ ts, type, text }`
+ 
+- POST `/api/runs/:runId/stop`
+  - 手动停止一次运行（尽力关闭浏览器上下文）。成功返回 `{ ok: true }`。
   
 - GET `/health`
   - 返回：`{ ok, port, publicDir, workflowsDir, buildDir, buildReady, ts }`

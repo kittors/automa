@@ -17,6 +17,71 @@ function ensureDirs() {
 ensureDirs();
 const app = createApp();
 
+let viteDev = null; // Vite 开发服务器（中间件模式）
+async function setupViteDev() {
+  if (process.env.NODE_ENV !== 'development') return;
+  try {
+    const configFile = path.join(runnerRoot, 'demo', 'vite.config.mjs');
+    if (!fs.existsSync(configFile)) return;
+    const vite = await import('vite');
+    viteDev = await vite.createServer({
+      configFile,
+      server: { middlewareMode: true },
+      appType: 'custom',
+      // root 由 configFile 决定
+    });
+    app.use(viteDev.middlewares);
+    logger.info('[runner] vite dev middleware attached');
+  } catch (e) {
+    logger.warn('[runner] vite dev setup failed: ' + (e?.message || e));
+  }
+}
+await setupViteDev();
+
+// 在开发模式下，若 Vue Demo 产物不存在，则自动构建一次
+async function ensureDemoBuilt() {
+  try {
+    const builtIndex = path.join(publicDir, 'demo', 'index.html');
+    if (fs.existsSync(builtIndex)) return;
+    // 若已启用 Vite 中间件开发，则无需构建
+    if (process.env.NODE_ENV === 'development' && viteDev) return;
+    if (process.env.NODE_ENV !== 'development') return;
+    const configFile = path.join(runnerRoot, 'demo', 'vite.config.mjs');
+    if (!fs.existsSync(configFile)) return;
+    logger.info('[runner] building demo (vite)...');
+    const vite = await import('vite');
+    await vite.build({ configFile });
+    logger.info('[runner] demo built to public/demo');
+  } catch (e) {
+    logger.warn('[runner] demo auto-build skipped: ' + (e?.message || e));
+  }
+}
+
+// 触发一次（不阻塞启动）
+ensureDemoBuilt();
+
+// Demo 路由：若未构建则在开发模式下即时构建后返回页面
+app.get('/demo', async (req, res) => {
+  try {
+    // 开发模式：通过 Vite 中间件提供 HMR 与按需编译
+    if (viteDev) {
+      const indexPath = path.join(runnerRoot, 'demo', 'index.html');
+      let html = fs.readFileSync(indexPath, 'utf8');
+      html = await viteDev.transformIndexHtml(req.originalUrl || '/demo', html);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.end(html);
+    }
+    const built = path.join(publicDir, 'demo', 'index.html');
+    if (!fs.existsSync(built) && process.env.NODE_ENV === 'development') {
+      await ensureDemoBuilt();
+    }
+    if (fs.existsSync(built)) return res.sendFile(built);
+    res.status(404).send('Demo not built. Run pnpm run demo:build');
+  } catch (e) {
+    res.status(500).send('Failed to build demo: ' + (e?.message || e));
+  }
+});
+
 // 尝试解析 Playwright 版本（避免被 package.exports 限制）
 function resolvePackageVersion(pkgName) {
   try {

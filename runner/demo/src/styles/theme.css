@@ -1,0 +1,35 @@
+:root{
+  --header-h: 56px;
+  --c-bg: #f6f8fc;
+  --c-card: #ffffff;
+  --c-border: #e5e7eb;
+  --c-fg: #0f172a;
+  --c-dim: #6b7280;
+  --c-primary: #2563eb; /* 蓝色主色 */
+  --c-primary-50: #eff6ff;
+  --c-primary-100: #dbeafe;
+  --c-blue: #2563eb;
+  --c-green: #16a34a;
+  --c-yellow: #d97706;
+  --c-red: #dc2626;
+}
+*{ box-sizing: border-box; }
+html,body,#app{ height: 100%; }
+body{
+  margin:0;
+  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  /* 关键修复：为固定头部预留空间，避免内容被遮挡 */
+  padding-top: var(--header-h);
+}
+.container{ width: 100%; max-width: 980px; margin: 0 auto; padding: 0 20px; }
+
+/* 公共控件 */
+.select{ height: 36px; min-width: 260px; border-radius: 10px; border: 1px solid var(--c-border); background: #fff; color: var(--c-fg); padding: 0 12px; outline: none; box-shadow: 0 1px 0 rgba(0,0,0,.02) inset; }
+.select:focus{ border-color: var(--c-primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, .15); }
+.btn{ height: 36px; border-radius: 10px; padding: 0 16px; border: 1px solid var(--c-border); cursor: pointer; font-weight: 600; }
+.btn.primary{ background: var(--c-primary); color: #fff; border-color: transparent; box-shadow: 0 6px 16px rgba(37,99,235,.3); }
+.btn.primary:hover{ filter: brightness(1.05); }
+.btn.light{ background: #fff; color: var(--c-fg); }
+.btn[disabled]{ opacity: .6; cursor: not-allowed; box-shadow: none; }
