@@ -21,6 +21,9 @@ EXPOSE 3100
 # Use non-root user provided by Playwright base image
 USER pwuser
 
+# Healthcheck: ensure web server responds
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=5 \
+  CMD node -e "require('http').get('http://localhost:3100/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+
 # Run under Xvfb so Chromium can start in headful mode inside container
 CMD ["bash", "-lc", "xvfb-run -a node src/server.js"]
-

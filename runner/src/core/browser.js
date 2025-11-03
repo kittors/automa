@@ -4,10 +4,10 @@ import { chromium } from 'playwright';
 import { delay, now } from './utils.js';
 
 // 启动持久化浏览器上下文（加载扩展 + 关闭首次启动提示）
-export async function launchContext({ buildDir, userDataDir }) {
+export async function launchContext({ buildDir, userDataDir, headless = false }) {
   fs.mkdirSync(userDataDir, { recursive: true });
   const context = await chromium.launchPersistentContext(userDataDir, {
-    headless: false,
+    headless,
     args: [
       `--disable-extensions-except=${buildDir}`,
       `--load-extension=${buildDir}`,

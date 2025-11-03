@@ -1,7 +1,8 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { nanoid } from 'nanoid';
-import { publicDir, workflowsDir, PORT } from './config.js';
+import { publicDir, workflowsDir, PORT, buildDir, PROFILE_MODE } from './config.js';
 import { readJSON, now } from '../core/utils.js';
 import { runWorkflow } from '../core/run.js';
 import { initRun, getRun, pushLog, addListener, removeListener } from '../core/store.js';
@@ -13,6 +14,15 @@ export function createApp() {
   const app = express();
 
   app.use(express.json({ limit: '2mb' }));
+  // 简单请求日志，便于排查（方法 路径 -> 状态 耗时）
+  app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+      const ms = Date.now() - start;
+      console.log(`[web] ${req.method} ${req.originalUrl} -> ${res.statusCode} ${ms}ms`);
+    });
+    next();
+  });
   app.use(express.static(publicDir));
 
   // Demo 页面，演示一键触发
@@ -21,10 +31,31 @@ export function createApp() {
   });
   app.get('/', (req, res) => res.redirect('/demo'));
 
+  // 健康检查与运行状态
+  const healthHandler = (req, res) => {
+    const manifest = path.join(buildDir, 'manifest.json');
+    const hasManifest = fs.existsSync(manifest);
+    res.json({
+      ok: true,
+      port: PORT,
+      publicDir,
+      workflowsDir,
+      buildDir,
+      buildReady: hasManifest,
+      ts: now(),
+    });
+  };
+  app.get('/health', healthHandler);
+  app.get('/api/health', healthHandler);
+
   // 启动一次运行
   app.post('/api/runs', async (req, res) => {
     try {
-      const { workflowFile, workflow, variables, timeoutMs } = req.body || {};
+      // 简单的共享用户目录并发锁，避免 Chromium 抢占同一 profile
+      if (PROFILE_MODE === 'shared' && sharedProfileLock) {
+        return res.status(409).json({ error: 'Runner busy: another run is using the shared profile. Set PROFILE_MODE=per-run to allow concurrent runs.' });
+      }
+      const { workflowFile, workflow, variables, timeoutMs, finishPolicy, idleMs } = req.body || {};
       let wf = workflow;
       if (!wf && workflowFile) {
         const p = path.join(workflowsDir, workflowFile);
@@ -46,13 +77,14 @@ export function createApp() {
       // 后台异步执行，立即返回 runId 给前端
       (async () => {
         try {
+          if (PROFILE_MODE === 'shared') sharedProfileLock = true;
           state.status = 'running';
           pushLog(runId, {
             type: 'info',
             text: 'Launching Chromium and loading extension...',
             ts: now(),
           });
-          await runWorkflow({ workflow: wf, variables, timeoutMs, log });
+          await runWorkflow({ runId, workflow: wf, variables, timeoutMs, finishPolicy, idleMs, log });
           state.status = 'succeeded';
           state.endedAt = now();
           pushLog(runId, { type: 'end', text: 'Run finished', ts: now() });
@@ -61,6 +93,8 @@ export function createApp() {
           state.error = String(err?.message || err);
           state.endedAt = now();
           pushLog(runId, { type: 'error', text: state.error, ts: now() });
+        } finally {
+          if (PROFILE_MODE === 'shared') sharedProfileLock = false;
         }
       })();
 
@@ -103,3 +137,6 @@ export function createApp() {
 
   return app;
 }
+
+// 模块级并发锁（shared profile 模式下生效）
+let sharedProfileLock = false;

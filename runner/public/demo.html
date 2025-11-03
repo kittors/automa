@@ -3,7 +3,7 @@
     </head>
     <body>
       <h2>Automa Runner Demo</h2>
-      <button id="btn">开始执行（打开百度进行搜索）123123</button>
+      <button id="btn">开始执行（打开百度进行搜索）</button>
       <div style="margin-top:12px">
         <div>Run ID: <span id="run"></span></div>
       </div>
@@ -11,16 +11,56 @@
       <div id="logs"></div>
       <script>
         const logsEl = document.getElementById('logs');
+        const runEl = document.getElementById('run');
+        const btn = document.getElementById('btn');
+        let busy = false;
+        let es = null;
+
         function log(line){ logsEl.textContent += line + '\\n'; }
+        function setBusy(v){ busy = v; btn.disabled = v; btn.textContent = v ? '运行中…' : '开始执行（打开百度进行搜索）'; }
+        function stopStream(){ if(es){ es.close(); es = null; } }
+
         async function start(){
+          if (busy) return;
+          setBusy(true);
+          stopStream();
           logsEl.textContent = '';
-          const res = await fetch('/api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowFile: 'baidu-search.json' }) });
-          const data = await res.json();
-          document.getElementById('run').textContent = data.runId || '';
-          const es = new EventSource('/api/runs/' + data.runId + '/stream');
-          es.onmessage = (ev) => { try{ const m = JSON.parse(ev.data); log('['+m.ts+'] ' + m.type + ' - ' + (m.text||'')); }catch(e){} };
-          es.addEventListener('end', ()=> es.close());
+          runEl.textContent = '';
+          try{
+            const res = await fetch('/api/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowFile: 'baidu-search.json' }) });
+            const data = await res.json().catch(()=>({}));
+
+            if(!res.ok){
+              const msg = (data && data.error) ? data.error : `HTTP ${res.status}`;
+              log(`[client] 请求失败：${msg}`);
+              // 409 代表共享模式下正在运行，给出提示
+              if(res.status === 409) log('[client] Runner 正在执行上一个任务。可等待完成，或将 PROFILE_MODE=per-run 以支持并发。');
+              return;
+            }
+
+            if(!data || !data.runId){
+              log('[client] 未返回 runId，无法订阅日志');
+              return;
+            }
+
+            runEl.textContent = data.runId;
+            es = new EventSource('/api/runs/' + data.runId + '/stream');
+            es.onmessage = (ev) => {
+              try {
+                const m = JSON.parse(ev.data);
+                if (m.type === 'ping') return; // 忽略心跳
+                log('[' + m.ts + '] ' + m.type + ' - ' + (m.text || ''));
+                if (m.type === 'end' || m.type === 'error') { stopStream(); setBusy(false); }
+              } catch (_) {}
+            };
+            es.onerror = () => { log('[client] 日志流连接中断'); stopStream(); setBusy(false); };
+          }catch(err){
+            log('[client] 异常：' + (err && err.message || err));
+          } finally {
+            // 若未建立 SSE（如 409），恢复按钮
+            if(!es) setBusy(false);
+          }
         }
-        document.getElementById('btn').addEventListener('click', start);
+        btn.addEventListener('click', start);
       </script>
     </body></html>

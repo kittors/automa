@@ -7,6 +7,10 @@ services:
     user: "0:0" # 以 root 运行，避免挂载目录权限问题
     environment:
       - PORT=${PORT:-3100}
+      - OPEN_BRIDGE=${OPEN_BRIDGE:-true}
+      - HEADLESS=${HEADLESS:-false}
+      - PROFILE_MODE=${PROFILE_MODE:-shared}
+      - PERSIST_RUN_PROFILE=${PERSIST_RUN_PROFILE:-false}
     ports:
       - "${PORT:-3100}:3100"
     # Keep Chromium stable and persist user profile across restarts
