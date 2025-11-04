@@ -83,6 +83,27 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:latest
           outputs: type=tar,dest=automa-runner-arm64.tar
 
+      - name: Compress offline tarballs (gzip)
+        run: |
+          set -euxo pipefail
+          gzip -9f automa-runner-amd64.tar
+          gzip -9f automa-runner-arm64.tar
+
+      - name: Ensure assets <2GB (split if needed)
+        run: |
+          set -euo pipefail
+          limit=$((2147483648 - 10*1024*1024)) # 2GiB minus 10MiB safety
+          for f in automa-runner-amd64.tar.gz automa-runner-arm64.tar.gz; do
+            if [ -f "$f" ]; then
+              size=$(stat -c%s "$f" 2>/dev/null || stat -f%z "$f")
+              if [ "$size" -ge "$limit" ]; then
+                echo "Splitting $f (size=$size) into 1024MiB parts..."
+                split -b 1024m -d -a 2 "$f" "$f.part"
+                rm -f "$f"
+              fi
+            fi
+          done
+
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
@@ -94,9 +115,15 @@ jobs:
             - ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:prod
             - digest: ${{ steps.push.outputs.digest }}
 
-            Offline images are attached below (load with `docker load -i <file>`), then run docker compose.
+            Offline images are attached below as gzip archives. To load:
+            - gunzip -c automa-runner-amd64.tar.gz | docker load
+            - gunzip -c automa-runner-arm64.tar.gz | docker load
+            If you see multiple parts (e.g. *.tar.gz.part00, part01 ...), reassemble first:
+            - cat automa-runner-amd64.tar.gz.part* > automa-runner-amd64.tar.gz && gunzip -c automa-runner-amd64.tar.gz | docker load
+            - cat automa-runner-arm64.tar.gz.part* > automa-runner-arm64.tar.gz && gunzip -c automa-runner-arm64.tar.gz | docker load
+            Then run docker compose.
           draft: false
           prerelease: false
           files: |
-            automa-runner-amd64.tar
-            automa-runner-arm64.tar
+            automa-runner-amd64.tar.gz*
+            automa-runner-arm64.tar.gz*

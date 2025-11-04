@@ -190,9 +190,9 @@ CI/发布（自动构建多架构镜像）
 - 触发条件
   - 向 `prod` 分支推送代码时：
     - 构建并推送多架构镜像到 GHCR：`ghcr.io/<OWNER>/automa-runner:{latest,prod,sha}`。
-    - 生成 Release，并附带离线镜像压缩包：
-      - `automa-runner-amd64.tar`（x86_64）
-      - `automa-runner-arm64.tar`（arm64）
+    - 生成 Release，并附带离线镜像压缩包（gzip）：
+      - `automa-runner-amd64.tar.gz`（x86_64）
+      - `automa-runner-arm64.tar.gz`（arm64）
 
 - 工作流文件
   - `.github/workflows/runner-release.yml`
@@ -204,9 +204,17 @@ CI/发布（自动构建多架构镜像）
   - 修改 `runner/docker-compose.yml` 中 `image` 为：`ghcr.io/<OWNER>/automa-runner:latest` 后 `docker compose up -d`。
 
 - 离线/内网部署
-  1) 从 Releases 下载与你架构匹配的 `automa-runner-*.tar`。
-  2) 在目标机器加载镜像：
-     - `docker load -i automa-runner-amd64.tar` 或 `docker load -i automa-runner-arm64.tar`
+  1) 从 Releases 下载与你架构匹配的 `automa-runner-*.tar.gz`。
+  2) 在目标机器加载镜像（两种方式二选一）：
+     - 直接解压后加载：
+       - `gzip -d automa-runner-amd64.tar.gz && docker load -i automa-runner-amd64.tar`
+       - `gzip -d automa-runner-arm64.tar.gz && docker load -i automa-runner-arm64.tar`
+     - 或使用管道一次性加载：
+       - `gunzip -c automa-runner-amd64.tar.gz | docker load`
+     - `gunzip -c automa-runner-arm64.tar.gz | docker load`
+  - 若 Release 中提供了分卷文件（如 `automa-runner-amd64.tar.gz.part00`、`part01` ...），先合并再加载：
+    - `cat automa-runner-amd64.tar.gz.part* > automa-runner-amd64.tar.gz && gunzip -c automa-runner-amd64.tar.gz | docker load`
+    - `cat automa-runner-arm64.tar.gz.part* > automa-runner-arm64.tar.gz && gunzip -c automa-runner-arm64.tar.gz | docker load`
   3) 确认已存在 `build/manifest.json`，放置为容器可见路径（默认使用仓库根的 `build`，即与 `runner` 同级）。
   4) 在 `runner` 目录执行：`docker compose up -d`。
   - 说明：当前 `docker-compose.yml` 默认使用镜像标签 `automa-runner:latest`，加载 tar 后无需改动；若你自定义了标签，请同步修改 compose 中的 `image`。
