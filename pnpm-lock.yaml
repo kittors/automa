@@ -372,6 +372,9 @@ importers:
       vue:
         specifier: 3.4.38
         version: 3.4.38
+      vue-router:
+        specifier: 4.4.5
+        version: 4.4.5(vue@3.4.38)
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.1.2
@@ -5065,6 +5068,11 @@ packages:
         optional: true
       vue:
         optional: true
+
+  vue-router@4.4.5:
+    resolution: {integrity: sha512-4fKZygS8cH1yCyuabAXGUAsyi1b2/o/OKgu/RUb+znIYOxPRxdkytJEx+0wGcpBE1pX6vUgh5jwWOKRGvuA/7Q==}
+    peerDependencies:
+      vue: ^3.2.0
 
   vue-router@4.5.0:
     resolution: {integrity: sha512-HDuk+PuH5monfNuY+ct49mNmkCRK4xJAV9Ts4z9UFc4rzdDnxQLyCMGGc8pKhZhHTVzfanpNwB/lwqevcBwI4w==}
@@ -10631,6 +10639,11 @@ snapshots:
       webpack: 5.76.0(webpack-cli@5.1.4)
     optionalDependencies:
       '@vue/compiler-sfc': 3.5.13
+      vue: 3.4.38
+
+  vue-router@4.4.5(vue@3.4.38):
+    dependencies:
+      '@vue/devtools-api': 6.6.4
       vue: 3.4.38
 
   vue-router@4.5.0(vue@3.4.38):

@@ -2,6 +2,15 @@
 # Match Playwright version in package.json (1.48.2)
 FROM mcr.microsoft.com/playwright:v1.56.1-jammy
 
+# Set container timezone to Asia/Shanghai
+ENV TZ=Asia/Shanghai
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo ${TZ} > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app/runner
 
 # Install runtime dependencies only

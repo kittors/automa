@@ -1,12 +1,14 @@
 services:
   runner:
-    image: automa-runner:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    user: "0:0" # 以 root 运行，避免挂载目录权限问题
+    # 从 GitHub 容器镜像（GHCR）部署
+    # 本项目使用固定镜像：ghcr.io/kittors/automa-runner:sha-f40a5fd
+    # 可在 deploy/.env 或环境变量中覆盖 RUNNER_IMAGE
+    image: ${RUNNER_IMAGE:-ghcr.io/kittors/automa-runner:sha-f40a5fd}
+    # 离线环境建议预先 docker load 镜像；此处使用 if_not_present，避免每次强制拉取
+    pull_policy: if_not_present
+    user: "0:0"
     env_file:
-      - .env
+      - ../runner/.env
     environment:
       - TZ=Asia/Shanghai
       - HOST=${HOST:-0.0.0.0}
@@ -15,28 +17,23 @@ services:
       - HEADLESS=${HEADLESS:-false}
       - PROFILE_MODE=${PROFILE_MODE:-shared}
       - PERSIST_RUN_PROFILE=${PERSIST_RUN_PROFILE:-false}
-      # 注意：使用 "-"（而非 ":-")，这样当 .env 中 PW_DEBUG 为空时，不会回退到默认值
       - PW_DEBUG=${PW_DEBUG-}
       - NO_SANDBOX=${NO_SANDBOX:-true}
     ports:
       - "${PORT:-3100}:${PORT:-3100}"
-    # Keep Chromium stable and persist user profile across restarts
     shm_size: "1gb"
     volumes:
-      # Mount the built extension directory from repo root
       - type: bind
         source: ../build
         target: /app/build
         read_only: true
-      # Persist Playwright user profile to avoid first-run noise
       - type: bind
-        source: ./.profile
+        source: ../runner/.profile
         target: /app/runner/.profile
-      # Mount workflows and public demo assets for easy edits
       - type: bind
-        source: ./workflows
+        source: ../runner/workflows
         target: /app/runner/workflows
       - type: bind
-        source: ./public
+        source: ../runner/public
         target: /app/runner/public
     restart: unless-stopped

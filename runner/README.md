@@ -189,7 +189,7 @@ Docker 部署
 CI/发布（自动构建多架构镜像）
 - 触发条件
   - 向 `prod` 分支推送代码时：
-    - 构建并推送多架构镜像到 GHCR：`ghcr.io/<OWNER>/automa-runner:{latest,prod,sha}`。
+    - 构建并推送多架构镜像到 GHCR：`ghcr.io/kittors/automa-runner:{latest,prod,sha}`。
     - 生成 Release，并附带离线镜像压缩包（gzip）：
       - `automa-runner-amd64.tar.gz`（x86_64）
       - `automa-runner-arm64.tar.gz`（arm64）
@@ -200,8 +200,8 @@ CI/发布（自动构建多架构镜像）
   - 触发分支：`prod`。合并到 `prod` 前请确认 `runner/package.json` 与 Dockerfile 的 Playwright 版本一致。
 
 - 在线使用（外网可访问 GHCR）
-  - 直接拉取：`docker pull ghcr.io/<OWNER>/automa-runner:latest`
-  - 修改 `runner/docker-compose.yml` 中 `image` 为：`ghcr.io/<OWNER>/automa-runner:latest` 后 `docker compose up -d`。
+  - 直接拉取：`docker pull ghcr.io/kittors/automa-runner:sha-f40a5fd`
+  - 修改 `runner/docker-compose.yml` 中 `image` 为：`ghcr.io/kittors/automa-runner:sha-f40a5fd` 后 `docker compose up -d`。
 
 - 离线/内网部署
   1) 从 Releases 下载与你架构匹配的 `automa-runner-*.tar.gz`。

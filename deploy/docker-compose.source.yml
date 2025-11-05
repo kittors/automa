@@ -1,12 +1,13 @@
 services:
   runner:
+    # 本地源码构建镜像（使用 runner/Dockerfile）
     image: automa-runner:latest
     build:
-      context: .
+      context: ../runner
       dockerfile: Dockerfile
     user: "0:0" # 以 root 运行，避免挂载目录权限问题
     env_file:
-      - .env
+      - ../runner/.env
     environment:
       - TZ=Asia/Shanghai
       - HOST=${HOST:-0.0.0.0}
@@ -30,13 +31,13 @@ services:
         read_only: true
       # Persist Playwright user profile to avoid first-run noise
       - type: bind
-        source: ./.profile
+        source: ../runner/.profile
         target: /app/runner/.profile
       # Mount workflows and public demo assets for easy edits
       - type: bind
-        source: ./workflows
+        source: ../runner/workflows
         target: /app/runner/workflows
       - type: bind
-        source: ./public
+        source: ../runner/public
         target: /app/runner/public
     restart: unless-stopped
