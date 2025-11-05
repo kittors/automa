@@ -24,6 +24,11 @@ COPY . .
 COPY entry.sh /entry.sh
 RUN chmod +x /entry.sh
 
+# Normalize potential CRLF line endings (Windows checkouts)
+# Ensures /usr/bin/env can find "bash" instead of "bash\r"
+RUN sed -i 's/\r$//' /entry.sh || true \
+    && find /app/runner -type f -name "*.sh" -exec sed -i 's/\r$//' {} + || true
+
 # Ensure required dirs exist inside image (can be mounted in compose)
 RUN mkdir -p .profile public workflows
 
